@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캐릭터 프로필 카드 제너레이터</title>
+    <style>
+        :root { --point-color: #000000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            padding: 20px;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) { body { flex-direction: column; padding: 10px; } }
+
+        .controls {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            color: #fff;
+            width: 350px;
+            max-width: 100%;
+            flex-shrink: 0;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .controls h3 { margin-bottom: 15px; font-size: 18px; font-weight: 700; }
+        .section-divider { margin: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+        .controls label { display: block; margin-bottom: 15px; font-size: 14px; font-weight: 600; }
+        .label-text { display: block; margin-bottom: 8px; }
+        
+        .controls input[type="text"], .controls textarea {
+            width: 100%; padding: 10px 12px; margin-top: 5px; border-radius: 12px;
+            border: none; background: #2c2c2e; color: #fff; font-family: inherit; font-size: 14px;
+        }
+        .controls textarea { min-height: 60px; resize: vertical; }
+
+        .color-input-group { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+        .color-preview { width: 50px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; }
+        input[type="color"], input[type="file"] { display: none; }
+
+        .image-upload-area { border: 2px dashed rgba(255,255,255,0.3); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
+        .preview-image { width: 100%; max-height: 100px; object-fit: contain; border-radius: 12px; }
+
+        .controls button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn-apply { background: #5856D6; color: white; margin-bottom: 10px; }
+        .btn-save { background: #34C759; color: white; }
+        .btn-reset { background: #FF3B30; color: white; }
+        button:hover { opacity: 0.8; }
+
+        .card-container { width: 390px; display: flex; flex-direction: column; align-items: center; }
+        .preview-label { color: white; font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: 1px; }
+        
+        .profile-card-final {
+            width: 360px; height: 480px; background: #fff; border-radius: 32px; padding: 26px;
+            display: flex; flex-direction: column; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+        }
+
+        .emoji-sticker { position: absolute; top: 22px; right: 26px; font-size: 34px; z-index: 5; }
+        
+        .header { display: flex; gap: 16px; margin-bottom: 18px; min-height: 100px; }
+        .photo { width: 100px; height: 100px; border-radius: 24px; background: #f0f0f0; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        
+        .name-box { flex: 1; padding-top: 10px; }
+        .name { font-size: 26px; font-weight: 900; color: #222; min-height: 32px; }
+        .one-liner { font-size: 11px; color: var(--point-color); font-weight: 700; margin-top: 6px; line-height: 1.4; word-break: break-all; }
+
+        .quote-bubble {
+            background-color: var(--point-color); color: white; padding: 12px 16px; min-height: 44px;
+            display: none; align-items: center; border-radius: 16px 16px 16px 4px;
+            font-size: 13px; font-weight: 600; margin-bottom: 20px; line-height: 1.4; word-break: break-all;
+        }
+
+        .info-wrap { display: flex; flex-direction: column; gap: 10px; }
+        .card-item { background: #fafafa; border-radius: 18px; padding: 12px 14px; border: 1px dashed #ddd; display: none; }
+        .label { font-size: 9px; font-weight: 800; color: #aaa; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .desc { font-size: 11.5px; line-height: 1.5; color: #444; white-space: pre-wrap; word-break: break-all; }
+
+        .tags { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; }
+        
+        .tag-pill {
+            background: white;
+            color: var(--point-color);
+            border: 1.5px solid var(--point-color);
+            padding: 0 10px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        /* [수정] # 기호와 텍스트 사이 미세한 간격 추가 */
+        .tag-pill span {
+            margin-left: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>카드 설정</h3>
+        <label>
+            <span class="label-text">포인트 컬러</span>
+            <div class="color-input-group">
+                <div class="color-preview" id="colorPreview" onclick="document.getElementById('colorPicker').click()" style="background-color: #000000;"></div>
+                <input type="color" id="colorPicker" value="#000000">
+                <input type="text" id="hexInput" value="#000000" maxlength="7">
+            </div>
+        </label>
+        <div class="section-divider"></div>
+        <label><span class="label-text">대표 이모지</span><input type="text" id="emoji" placeholder="예: 😀"></label>
+        <label><span class="label-text">이름</span><input type="text" id="name" placeholder="이름 입력"></label>
+        <label><span class="label-text">한 줄 소개</span><textarea id="oneLiner" placeholder="한 줄 소개 입력"></textarea></label>
+        <div class="section-divider"></div>
+        <label>
+            <span class="label-text">프로필 사진</span>
+            <div class="image-upload-area" onclick="document.getElementById('photoInput').click()">
+                <img id="previewImg" class="preview-image" style="display:none;">
+                <div id="uploadText"><p style="color: #8e8e93; font-size: 13px;">📷 사진 업로드</p></div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*">
+        </label>
+        <div class="section-divider"></div>
+        <label><span class="label-text">캐릭터 한마디</span><input type="text" id="quote" placeholder="대사 입력"></label>
+        <label><span class="label-text">외형 (Appearance)</span><textarea id="appearance" placeholder="외형 묘사"></textarea></label>
+        <label><span class="label-text">성격 (Personality)</span><textarea id="personality" placeholder="성격 묘사"></textarea></label>
+        <label><span class="label-text">태그</span><input type="text" id="tagInput" placeholder="태그1, 태그2"></label>
+        <div class="section-divider"></div>
+        <button class="btn-apply" onclick="updatePreview()">카드 설정 적용</button>
+        <button class="btn-save" onclick="saveAsImage()">이미지로 저장</button>
+        <button class="btn-reset" onclick="resetCard()">초기화</button>
+    </div>
+
+    <div class="card-container">
+        <div class="preview-label">PREVIEW</div>
+        <div class="profile-card-final" id="previewCard">
+            <div class="emoji-sticker" id="p-emoji"></div>
+            <div class="header">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="photo" id="p-photo">
+                <div class="name-box">
+                    <div class="name" id="p-name"></div>
+                    <div class="one-liner" id="p-oneLiner"></div>
+                </div>
+            </div>
+            <div class="quote-bubble" id="p-quote"></div>
+            <div class="info-wrap">
+                <div class="card-item" id="item-app">
+                    <span class="label">Appearance</span>
+                    <div class="desc" id="p-appearance"></div>
+                </div>
+                <div class="card-item" id="item-per">
+                    <span class="label">Personality</span>
+                    <div class="desc" id="p-personality"></div>
+                </div>
+            </div>
+            <div class="tags" id="p-tags"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function updateColor(color) {
+            document.documentElement.style.setProperty('--point-color', color);
+            document.getElementById('colorPreview').style.backgroundColor = color;
+            document.getElementById('hexInput').value = color.toUpperCase();
+            document.getElementById('colorPicker').value = color;
+        }
+
+        document.getElementById('colorPicker').addEventListener('input', (e) => updateColor(e.target.value));
+        document.getElementById('hexInput').addEventListener('input', (e) => {
+            let val = e.target.value;
+            if (/^#[0-9A-Fa-f]{6}$/.test(val)) updateColor(val);
+        });
+
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('previewImg').src = event.target.result;
+                document.getElementById('previewImg').style.display = 'block';
+                document.getElementById('uploadText').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updatePreview() {
+            const ui = (id) => document.getElementById(id).value;
+            const setDisplay = (id, val, disp = 'flex') => {
+                document.getElementById(id).style.display = val ? disp : 'none';
+            };
+
+            document.getElementById('p-emoji').textContent = ui('emoji');
+            document.getElementById('p-name').textContent = ui('name');
+            document.getElementById('p-oneLiner').innerHTML = ui('oneLiner').replace(/\n/g, '<br>');
+            
+            const quote = ui('quote');
+            document.getElementById('p-quote').textContent = quote;
+            setDisplay('p-quote', quote, 'flex');
+
+            const uploadedImg = document.getElementById('previewImg').src;
+            if(uploadedImg.startsWith('data:')) document.getElementById('p-photo').src = uploadedImg;
+
+            const app = ui('appearance'), per = ui('personality');
+            document.getElementById('p-appearance').textContent = app;
+            document.getElementById('p-personality').textContent = per;
+            setDisplay('item-app', app, 'block');
+            setDisplay('item-per', per, 'block');
+
+            const tagContainer = document.getElementById('p-tags');
+            tagContainer.innerHTML = '';
+            const tags = ui('tagInput');
+            if(tags) {
+                tags.split(',').forEach(t => {
+                    const tag = t.trim();
+                    if(tag) tagContainer.innerHTML += `<span class="tag-pill">#<span>${tag}</span></span>`;
+                });
+            }
+        }
+
+        async function saveAsImage() {
+            const card = document.getElementById('previewCard');
+            // [수정] 화질 대폭 개선을 위한 scale 업그레이드 및 안티앨리어싱 설정
+            const canvas = await html2canvas(card, { 
+                backgroundColor: null, 
+                scale: 5, 
+                useCORS: true,
+                imageSmoothingEnabled: false
+            });
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png', 1.0);
+            a.download = `${document.getElementById('name').value || 'character'}_card.png`;
+            a.click();
+        }
+
+        function resetCard() {
+            ['emoji', 'name', 'oneLiner', 'quote', 'appearance', 'personality', 'tagInput'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('uploadText').style.display = 'block';
+            document.getElementById('photoInput').value = '';
+            updateColor('#000000');
+            updatePreview();
+        }
+    </script>
+</body>
+</html>
