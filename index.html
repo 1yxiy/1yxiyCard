@@ -88,7 +88,16 @@
         .emoji-sticker { position: absolute; top: 22px; right: 26px; font-size: 34px; z-index: 5; }
         
         .header { display: flex; gap: 16px; margin-bottom: 18px; min-height: 100px; }
-        .photo { width: 100px; height: 100px; border-radius: 24px; background: #f0f0f0; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .photo { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 24px; 
+            background: #f0f0f0; 
+            object-fit: cover;
+            object-position: center;
+            border: 2px solid var(--point-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
+        }
         
         .name-box { flex: 1; padding-top: 10px; }
         .name { font-size: 26px; font-weight: 900; color: #222; min-height: 32px; }
@@ -140,7 +149,7 @@
             </div>
         </label>
         <div class="section-divider"></div>
-        <label><span class="label-text">대표 이모지</span><input type="text" id="emoji" placeholder="예: 😀"></label>
+        <label><span class="label-text">대표 이모지</span><input type="text" id="emoji" placeholder="😀"></label>
         <label><span class="label-text">이름</span><input type="text" id="name" placeholder="이름 입력"></label>
         <label><span class="label-text">한 줄 소개</span><textarea id="oneLiner" placeholder="한 줄 소개 입력"></textarea></label>
         <div class="section-divider"></div>
@@ -208,6 +217,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
+        let originalImageData = null;
+        let croppedImageData = null;
+
         function updateColor(color) {
             document.documentElement.style.setProperty('--point-color', color);
             document.getElementById('colorPreview').style.backgroundColor = color;
@@ -226,9 +238,32 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                document.getElementById('previewImg').src = event.target.result;
-                document.getElementById('previewImg').style.display = 'block';
-                document.getElementById('uploadText').style.display = 'none';
+                originalImageData = event.target.result;
+                
+                // 고화질로 정사각형 크롭
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const size = Math.min(img.width, img.height);
+                    
+                    // 고화질 유지 (원본 크기 또는 최대 1000px)
+                    const targetSize = Math.min(size, 1000);
+                    canvas.width = targetSize;
+                    canvas.height = targetSize;
+                    
+                    const offsetX = (img.width - size) / 2;
+                    const offsetY = (img.height - size) / 2;
+                    
+                    ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, targetSize, targetSize);
+                    
+                    croppedImageData = canvas.toDataURL('image/png', 1.0);
+                    
+                    document.getElementById('previewImg').src = croppedImageData;
+                    document.getElementById('previewImg').style.display = 'block';
+                    document.getElementById('uploadText').style.display = 'none';
+                };
+                img.src = originalImageData;
             };
             reader.readAsDataURL(file);
         });
@@ -247,8 +282,9 @@
             document.getElementById('p-quote').textContent = quote;
             setDisplay('p-quote', quote, 'flex');
 
-            const uploadedImg = document.getElementById('previewImg').src;
-            if(uploadedImg.startsWith('data:')) document.getElementById('p-photo').src = uploadedImg;
+            if(croppedImageData) {
+                document.getElementById('p-photo').src = croppedImageData;
+            }
 
             // 항목 1
             const label1 = ui('label1');
@@ -277,12 +313,15 @@
 
         async function saveAsImage() {
             const card = document.getElementById('previewCard');
+            
             const canvas = await html2canvas(card, { 
                 backgroundColor: null, 
                 scale: 5, 
                 useCORS: true,
+                allowTaint: true,
                 imageSmoothingEnabled: false
             });
+            
             const a = document.createElement('a');
             a.href = canvas.toDataURL('image/png', 1.0);
             a.download = `${document.getElementById('name').value || 'character'}_card.png`;
@@ -296,6 +335,8 @@
             document.getElementById('previewImg').style.display = 'none';
             document.getElementById('uploadText').style.display = 'block';
             document.getElementById('photoInput').value = '';
+            originalImageData = null;
+            croppedImageData = null;
             updateColor('#000000');
             
             // 프리뷰 초기화 (빈 상태)
