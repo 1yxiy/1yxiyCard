@@ -45,6 +45,22 @@
         }
         .controls textarea { min-height: 60px; resize: vertical; }
 
+        .label-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .label-input-group input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+            background: #3a3a3c;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
         .color-input-group { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
         .color-preview { width: 50px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; }
         input[type="color"], input[type="file"] { display: none; }
@@ -57,6 +73,8 @@
         .btn-save { background: #34C759; color: white; }
         .btn-reset { background: #FF3B30; color: white; }
         button:hover { opacity: 0.8; }
+
+        small { color: #8e8e93; font-size: 11px; display: block; margin-top: 3px; }
 
         .card-container { width: 390px; display: flex; flex-direction: column; align-items: center; }
         .preview-label { color: white; font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: 1px; }
@@ -105,7 +123,6 @@
             line-height: 1;
         }
 
-        /* [수정] # 기호와 텍스트 사이 미세한 간격 추가 */
         .tag-pill span {
             margin-left: 2px;
         }
@@ -137,8 +154,25 @@
         </label>
         <div class="section-divider"></div>
         <label><span class="label-text">캐릭터 한마디</span><input type="text" id="quote" placeholder="대사 입력"></label>
-        <label><span class="label-text">외형 (Appearance)</span><textarea id="appearance" placeholder="외형 묘사"></textarea></label>
-        <label><span class="label-text">성격 (Personality)</span><textarea id="personality" placeholder="성격 묘사"></textarea></label>
+        
+        <label>
+            <span class="label-text">항목 1</span>
+            <div class="label-input-group">
+                <input type="text" id="label1" placeholder="라벨 (예: Personality)" value="Personality">
+            </div>
+            <textarea id="content1" placeholder="내용 입력"></textarea>
+            <small>라벨 이름을 변경할 수 있어요</small>
+        </label>
+
+        <label>
+            <span class="label-text">항목 2</span>
+            <div class="label-input-group">
+                <input type="text" id="label2" placeholder="라벨 (예: Appearance)" value="Appearance">
+            </div>
+            <textarea id="content2" placeholder="내용 입력"></textarea>
+            <small>라벨 이름을 변경할 수 있어요</small>
+        </label>
+
         <label><span class="label-text">태그</span><input type="text" id="tagInput" placeholder="태그1, 태그2"></label>
         <div class="section-divider"></div>
         <button class="btn-apply" onclick="updatePreview()">카드 설정 적용</button>
@@ -159,13 +193,13 @@
             </div>
             <div class="quote-bubble" id="p-quote"></div>
             <div class="info-wrap">
-                <div class="card-item" id="item-app">
-                    <span class="label">Appearance</span>
-                    <div class="desc" id="p-appearance"></div>
+                <div class="card-item" id="item-1">
+                    <span class="label" id="p-label1">Personality</span>
+                    <div class="desc" id="p-content1"></div>
                 </div>
-                <div class="card-item" id="item-per">
-                    <span class="label">Personality</span>
-                    <div class="desc" id="p-personality"></div>
+                <div class="card-item" id="item-2">
+                    <span class="label" id="p-label2">Appearance</span>
+                    <div class="desc" id="p-content2"></div>
                 </div>
             </div>
             <div class="tags" id="p-tags"></div>
@@ -216,11 +250,19 @@
             const uploadedImg = document.getElementById('previewImg').src;
             if(uploadedImg.startsWith('data:')) document.getElementById('p-photo').src = uploadedImg;
 
-            const app = ui('appearance'), per = ui('personality');
-            document.getElementById('p-appearance').textContent = app;
-            document.getElementById('p-personality').textContent = per;
-            setDisplay('item-app', app, 'block');
-            setDisplay('item-per', per, 'block');
+            // 항목 1
+            const label1 = ui('label1');
+            const content1 = ui('content1');
+            document.getElementById('p-label1').textContent = label1;
+            document.getElementById('p-content1').textContent = content1;
+            setDisplay('item-1', content1, 'block');
+
+            // 항목 2
+            const label2 = ui('label2');
+            const content2 = ui('content2');
+            document.getElementById('p-label2').textContent = label2;
+            document.getElementById('p-content2').textContent = content2;
+            setDisplay('item-2', content2, 'block');
 
             const tagContainer = document.getElementById('p-tags');
             tagContainer.innerHTML = '';
@@ -235,7 +277,6 @@
 
         async function saveAsImage() {
             const card = document.getElementById('previewCard');
-            // [수정] 화질 대폭 개선을 위한 scale 업그레이드 및 안티앨리어싱 설정
             const canvas = await html2canvas(card, { 
                 backgroundColor: null, 
                 scale: 5, 
@@ -249,12 +290,23 @@
         }
 
         function resetCard() {
-            ['emoji', 'name', 'oneLiner', 'quote', 'appearance', 'personality', 'tagInput'].forEach(id => document.getElementById(id).value = '');
+            ['emoji', 'name', 'oneLiner', 'quote', 'tagInput', 'content1', 'content2'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('label1').value = 'Personality';
+            document.getElementById('label2').value = 'Appearance';
             document.getElementById('previewImg').style.display = 'none';
             document.getElementById('uploadText').style.display = 'block';
             document.getElementById('photoInput').value = '';
             updateColor('#000000');
-            updatePreview();
+            
+            // 프리뷰 초기화 (빈 상태)
+            document.getElementById('p-emoji').textContent = '';
+            document.getElementById('p-name').textContent = '';
+            document.getElementById('p-oneLiner').innerHTML = '';
+            document.getElementById('p-quote').style.display = 'none';
+            document.getElementById('p-photo').src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            document.getElementById('item-1').style.display = 'none';
+            document.getElementById('item-2').style.display = 'none';
+            document.getElementById('p-tags').innerHTML = '';
         }
     </script>
 </body>
