@@ -215,12 +215,12 @@
     font-size:13px; line-height:1.5; color:var(--muted); -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     overflow-wrap:anywhere; word-break:break-word;}
 
-  .front-slot{margin-bottom:2px; min-width:0;}
-  .tags-row{display:flex; flex-wrap:wrap; gap:6px;}
-  .chip{font-size:10px; font-weight:700; text-transform:var(--label-transform); letter-spacing:.03em; padding:4px 8px; border-radius:0; background:transparent; border:1px solid var(--ink); color:var(--chip-text); white-space:nowrap;}
+  .front-slot{margin-bottom:2px; min-width:0; min-height:26px; display:flex; align-items:center; overflow:hidden;}
+  .tags-row{display:flex; flex-wrap:nowrap; gap:6px; overflow:hidden; width:100%;}
+  .chip{font-size:10px; font-weight:700; text-transform:var(--label-transform); letter-spacing:.03em; padding:4px 8px; border-radius:0; background:transparent; border:1px solid var(--ink); color:var(--chip-text); white-space:nowrap; flex-shrink:0;}
   .chip-plus{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:800;}
 
-  .music-bar{display:flex; align-items:center; gap:10px; min-width:0;}
+  .music-bar{display:flex; align-items:center; gap:10px; min-width:0; width:100%;}
   .music-track{flex:1; height:2px; background:var(--ink); border-radius:0; position:relative; min-width:0;}
   .music-progress{position:absolute; left:0; top:0; height:100%; width:0%; background:var(--accent); border-radius:0;}
   .music-dot{position:absolute; top:50%; left:0%; width:9px; height:9px; border-radius:0; background:var(--accent); border:1px solid var(--paper); transform:translate(-50%,-50%);}
@@ -267,7 +267,7 @@
   <div class="hero">
     <div>
       <h1>캐릭터 소개 카드 메이커</h1>
-      <p>정보를 입력해 카드를 추가하세요. 이름을 클릭하면 상세 소개가 열리고 고정됩니다. "티스토리용 코드 복사"는 스타일/스크립트 태그 없이 인라인 스타일 + &lt;details&gt;만으로 만들어져 블로그에 붙여넣어도 그대로 유지됩니다.</p>
+      <p>정보를 입력해 카드를 추가하세요. 이름을 클릭하면 상세 소개가 열리고 고정됩니다. "카드 HTML 파일로 저장"을 누르면 스타일과 동작이 그대로 담긴 독립 실행형 HTML 파일이 다운로드됩니다.</p>
     </div>
     <div style="display:flex; gap:8px;">
       <button type="button" class="theme-toggle" id="styleToggle" title="페이퍼 에디션 / 심플 스타일 전환"></button>
@@ -286,11 +286,11 @@
         </div>
         <div class="field">
           <label for="name">캐릭터 이름</label>
-          <input type="text" id="name" required placeholder="예: 김철수">
+          <input type="text" id="name" required placeholder="예: 윤">
         </div>
         <div class="field">
           <label for="creator">제작자 아이디</label>
-          <input type="text" id="creator" placeholder="@test">
+          <input type="text" id="creator" placeholder="@seita">
         </div>
         <div class="field">
           <label for="oneliner">한마디</label>
@@ -319,7 +319,7 @@
 
         <div class="field" id="tagsField">
           <label for="tags">태그 (쉼표로 구분, 상세 박스에도 표시됨)</label>
-          <input type="text" id="tags" placeholder="#아포칼립스, #순애, #오리지널">
+          <input type="text" id="tags" placeholder="#아포칼립스, #SF, #오리지널">
         </div>
 
         <div class="field" id="musicField" hidden>
@@ -576,7 +576,7 @@ function buildCard(data){
     </div>
     <button type="button" class="oneliner-trigger">${data.oneliner}</button>
     <div class="front-slot"></div>
-    <button type="button" class="copy-btn">티스토리용 코드 복사</button>
+    <button type="button" class="copy-btn">카드 HTML 파일로 저장</button>
     <div class="flyout" data-pinned="false">
       <button type="button" class="flyout-close" aria-label="닫기">×</button>
       <div class="eyebrow">Detail</div>
@@ -633,7 +633,7 @@ function buildCard(data){
     card.addEventListener('mouseleave', () => { if (flyout.dataset.pinned !== 'true') closeFlyout(card); });
   }
 
-  card.querySelector('.copy-btn').addEventListener('click', () => copyTistorySnippet(card));
+  card.querySelector('.copy-btn').addEventListener('click', () => saveCardAsFile(card));
 
   return card;
 }
@@ -701,140 +701,218 @@ searchInput.addEventListener('input', () => {
 });
 
 /* ================================================================
-   Tistory-safe export: NO <style>, NO <script> — everything is
-   inline `style="..."` attributes plus a native <details>/<summary>
-   for the click-to-expand description. This survives blog editors
-   that strip <style>/<script> tags on save (Tistory included).
+   Standalone card export: a full, independent HTML file (real
+   <style> + <script> tags, same hover/click-to-pin flyout behavior
+   as the live preview) that gets downloaded, not copied to clipboard.
    ================================================================ */
 function escapeHtml(str){
   return String(str ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
-function buildTistorySnippet(data){
+const EXPORT_CARD_CSS = `
+*{box-sizing:border-box;}
+body{margin:0;padding:40px 20px;background:var(--bg);display:flex;justify-content:center;font-family:'Pretendard',system-ui,sans-serif;color:var(--text);}
+.card{position:relative;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-lg);padding:14px;width:260px;min-width:0;}
+.thumb-wrap{position:relative;width:100%;aspect-ratio:1/1;border-radius:0;overflow:hidden;background:var(--thumb-grad);border:1px solid var(--card-border);margin-bottom:12px;}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.nsfw-badge{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:9px;font-weight:900;letter-spacing:.06em;padding:3px 7px;border-radius:0;}
+.name-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.name-trigger{background:none;border:none;padding:0;margin:0;text-align:left;font-family:'Pretendard',sans-serif;font-weight:800;letter-spacing:-.01em;font-size:16px;color:var(--text);cursor:pointer;overflow-wrap:anywhere;word-break:break-word;}
+.id-inline{font-weight:400;color:var(--text-dim);font-size:12px;margin-left:2px;}
+.like-btn{background:none;border:1px solid var(--card-border);border-radius:0;width:28px;height:28px;cursor:pointer;padding:0;flex-shrink:0;color:var(--text-dim);display:flex;align-items:center;justify-content:center;}
+.like-btn svg{width:16px;height:16px;}
+.like-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);}
+.like-btn[aria-pressed="true"] svg{fill:var(--accent);stroke:var(--accent);}
+.oneliner-trigger{display:-webkit-box;width:100%;background:none;border:none;padding:0;margin:8px 0 10px;text-align:left;cursor:pointer;font-size:13px;line-height:1.5;color:var(--text-dim);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;}
+.front-slot{margin-bottom:2px;min-width:0;min-height:26px;display:flex;align-items:center;overflow:hidden;}
+.tags-row{display:flex;flex-wrap:nowrap;gap:6px;overflow:hidden;width:100%;}
+.chip{font-size:10px;font-weight:700;text-transform:var(--label-transform,none);letter-spacing:.03em;padding:4px 8px;border-radius:0;background:transparent;border:1px solid var(--card-border);color:var(--chip-text);white-space:nowrap;flex-shrink:0;}
+.chip-plus{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800;}
+.music-bar{display:flex;align-items:center;gap:10px;min-width:0;width:100%;}
+.music-track{flex:1;height:2px;background:var(--card-border);border-radius:0;position:relative;min-width:0;}
+.music-progress{position:absolute;left:0;top:0;height:100%;width:0%;background:var(--accent);border-radius:0;}
+.music-dot{position:absolute;top:50%;left:0%;width:9px;height:9px;border-radius:0;background:var(--accent);border:1px solid var(--card);transform:translate(-50%,-50%);}
+.music-time{font-size:10px;letter-spacing:.03em;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.flyout{position:fixed;width:260px;z-index:40;background:var(--flyout-bg);border:1px solid var(--flyout-border);border-radius:var(--radius-flyout);padding:18px;box-shadow:var(--card-shadow,0 18px 40px rgba(0,0,0,.35));opacity:0;visibility:hidden;transition:opacity .15s ease;box-sizing:border-box;overflow-y:auto;}
+.flyout.is-open{opacity:1;visibility:visible;}
+.eyebrow{display:flex;align-items:center;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:var(--label-transform,none);color:var(--text-dim);margin-bottom:8px;}
+.eyebrow:before{content:"";display:var(--tick-display,none);width:14px;border-top:2px solid var(--accent);margin-right:6px;flex-shrink:0;}
+.flyout-close{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:0;border:1px solid var(--card-border);background:transparent;color:var(--text);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.flyout-name{font-family:'Pretendard',sans-serif;font-weight:800;font-size:17px;margin:0 24px 10px 0;overflow-wrap:anywhere;word-break:break-word;}
+.flyout-tags{display:flex;flex-wrap:wrap;gap:6px;max-height:56px;overflow:hidden;margin-bottom:12px;}
+.flyout-divider{border:none;border-top:1px dashed var(--text-dim);margin:0 0 12px;}
+.flyout-desc{max-height:220px;overflow-y:auto;overflow-x:hidden;font-size:13px;line-height:1.7;color:var(--text);opacity:.9;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;padding-right:4px;margin-bottom:14px;}
+.flyout-creator{text-align:right;font-size:12px;color:var(--text-dim);overflow-wrap:anywhere;}
+`;
+
+function buildStandaloneCardHTML(data){
   const c = getComputedStyle(root);
-  const bg = c.getPropertyValue('--card').trim();
-  const border = c.getPropertyValue('--card-border').trim();
-  const text = c.getPropertyValue('--text').trim();
-  const dim = c.getPropertyValue('--text-dim').trim();
-  const chipBg = c.getPropertyValue('--chip-bg').trim();
-  const chipBorder = c.getPropertyValue('--chip-border').trim();
-  const chipText = c.getPropertyValue('--chip-text').trim();
-  const thumbGrad = c.getPropertyValue('--thumb-grad').trim();
-  const radiusLg = c.getPropertyValue('--radius-lg').trim();
+  const snapshotVars = ['--bg','--panel','--card','--card-border','--chip-bg','--chip-border','--chip-text',
+    '--text','--text-dim','--flyout-bg','--flyout-border','--thumb-grad','--radius-lg','--radius-sm',
+    '--radius-flyout','--card-shadow','--label-transform','--tick-display','--red']
+    .map(v => `${v}:${c.getPropertyValue(v).trim()}`).join(';');
+
   const accent = data.accentColor;
   const accentSoft = `color-mix(in srgb, ${accent} 16%, transparent)`;
 
-  const chipStyle = `display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:4px 8px;border-radius:0;background:transparent;border:1px solid ${border};color:${chipText};white-space:nowrap;margin:0 4px 4px 0;`;
-  const chipPlusStyle = `display:inline-block;font-size:10px;font-weight:800;padding:4px 8px;border-radius:0;background:${accent};border:1px solid ${accent};color:#fff;white-space:nowrap;`;
-
   const shownTags = data.tags.slice(0, 3);
   const extraCount = data.tags.length > 3 ? data.tags.length - 3 : 0;
-  const frontTagsHTML = shownTags.map(t => `<span style="${chipStyle}">${escapeHtml(t)}</span>`).join('')
-    + (extraCount > 0 ? `<span style="${chipPlusStyle}">+${extraCount}</span>` : '');
-  const allTagsHTML = data.tags.map(t => `<span style="${chipStyle}">${escapeHtml(t)}</span>`).join('');
+  const frontTagsHTML = shownTags.map(t => `<span class="chip">${escapeHtml(t)}</span>`).join('')
+    + (extraCount > 0 ? `<span class="chip chip-plus">+${extraCount}</span>` : '');
+  const allTagsHTML = data.tags.map(t => `<span class="chip">${escapeHtml(t)}</span>`).join('');
 
-  const heartSvg = data.liked
-    ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="${accent}"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`
-    : `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${dim}" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`;
+  const heartSvg = data.liked ? HEART_FILLED : HEART_OUTLINE;
+  const nsfwHTML = data.nsfw ? `<span class="nsfw-badge">NSFW</span>` : '';
+  const thumbHTML = data.thumb ? `<img src="${data.thumb}" alt="${escapeHtml(data.name)} 썸네일">` : '';
 
   let frontSlotHTML;
   if (data.frontMode === 'music') {
     const currentSec = parseTime(data.musicCurrent || '0:00');
     const durationSec = parseTime(data.musicDuration || '0:00');
     const pct = durationSec > 0 ? Math.min(100, Math.max(0, (currentSec / durationSec) * 100)) : 0;
-    frontSlotHTML = `<div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
-      <div style="flex:1;height:2px;background:${border};border-radius:0;position:relative;">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${accent};border-radius:0;"></div>
-        <div style="position:absolute;top:50%;left:${pct}%;width:9px;height:9px;border-radius:0;background:${accent};border:1px solid ${bg};transform:translate(-50%,-50%);"></div>
-      </div>
-      <span style="font-size:10px;letter-spacing:.03em;color:${dim};white-space:nowrap;">${fmtTime(currentSec)} / ${fmtTime(durationSec)}</span>
-    </div>`;
+    frontSlotHTML = `<div class="music-bar"><div class="music-track"><div class="music-progress" style="width:${pct}%"></div><div class="music-dot" style="left:${pct}%"></div></div><span class="music-time">${fmtTime(currentSec)} / ${fmtTime(durationSec)}</span></div>`;
   } else {
-    frontSlotHTML = `<div style="margin-top:4px;">${frontTagsHTML}</div>`;
+    frontSlotHTML = `<div class="tags-row">${frontTagsHTML}</div>`;
   }
 
-  const thumbHTML = data.thumb
-    ? `<img src="${data.thumb}" alt="${escapeHtml(data.name)} 썸네일" style="width:100%;height:100%;object-fit:cover;display:block;">`
-    : '';
-  const nsfwBadgeHTML = data.nsfw
-    ? `<span style="position:absolute;top:8px;right:8px;background:#c54d3f;color:#fff;font-size:9px;font-weight:900;letter-spacing:.06em;padding:3px 7px;border-radius:0;">NSFW</span>`
+  const flyoutTagsBlock = data.tags.length > 0
+    ? `<div class="flyout-tags">${allTagsHTML}</div><hr class="flyout-divider">`
     : '';
 
-  const detailTagsBlock = data.tags.length > 0
-    ? `<div style="margin-bottom:12px;">${allTagsHTML}</div>`
-    : '';
-
-  return `<div style="max-width:280px;font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;background:${bg};border:1px solid ${border};border-radius:${radiusLg};box-shadow:4px 4px 0 ${border};padding:14px;color:${text};box-sizing:border-box;">
-<div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:0;overflow:hidden;background:${thumbGrad};border:1px solid ${border};margin-bottom:12px;">${thumbHTML}${nsfwBadgeHTML}</div>
-<details>
-<summary style="cursor:pointer;list-style:none;">
-<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-<span style="font-weight:700;font-size:16px;">${escapeHtml(data.name)} <span style="font-weight:400;color:${dim};font-size:13px;">· ${escapeHtml(data.creator)}</span></span>
-<span style="flex-shrink:0;display:inline-flex;vertical-align:middle;">${heartSvg}</span>
+  const cardHTML = `<div class="card" style="--accent:${accent};--accent-soft:${accentSoft};">
+<div class="thumb-wrap">${thumbHTML}${nsfwHTML}</div>
+<div class="name-row">
+<button type="button" class="name-trigger">${escapeHtml(data.name)} <span class="id-inline">· ${escapeHtml(data.creator)}</span></button>
+<button type="button" class="like-btn" aria-pressed="${data.liked}">${heartSvg}</button>
 </div>
-<div style="margin:6px 0 0;font-size:13px;line-height:1.5;color:${dim};overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(data.oneliner)}</div>
-</summary>
-<div style="margin-top:12px;padding-top:12px;border-top:1px dashed ${border};">
-${detailTagsBlock}
-<div style="font-size:13px;line-height:1.7;color:${text};opacity:.85;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;margin-bottom:10px;">${escapeHtml(data.desc || data.oneliner)}</div>
-<div style="text-align:right;font-size:12px;color:${dim};">${escapeHtml(data.creator)}</div>
+<button type="button" class="oneliner-trigger">${escapeHtml(data.oneliner)}</button>
+<div class="front-slot">${frontSlotHTML}</div>
+<div class="flyout" data-pinned="false">
+<button type="button" class="flyout-close" aria-label="닫기">×</button>
+<div class="eyebrow">Detail</div>
+<div class="flyout-name">${escapeHtml(data.name)}</div>
+${flyoutTagsBlock}
+<div class="flyout-desc">${escapeHtml(data.desc || data.oneliner)}</div>
+<div class="flyout-creator">${escapeHtml(data.creator)}</div>
 </div>
-</details>
-${frontSlotHTML}
 </div>`;
-}
 
-async function copyTextRobust(text){
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+  const script = `
+(function(){
+  var card = document.querySelector('.card');
+  var flyout = card.querySelector('.flyout');
+  var nameBtn = card.querySelector('.name-trigger');
+  var oneLinerBtn = card.querySelector('.oneliner-trigger');
+  var closeBtn = card.querySelector('.flyout-close');
+  var likeBtn = card.querySelector('.like-btn');
+  var flyoutTagsEl = card.querySelector('.flyout-tags');
+  var hoverCapable = window.matchMedia('(hover: hover)').matches;
+  var pinned = false;
+  var HEART_FILLED = ${JSON.stringify(HEART_FILLED)};
+  var HEART_OUTLINE = ${JSON.stringify(HEART_OUTLINE)};
+
+  function truncateTags(container){
+    requestAnimationFrame(function(){
+      var first = container.children[0];
+      if (!first) return;
+      var rowHeight = first.offsetHeight;
+      var gap = parseFloat(getComputedStyle(container).rowGap || 6) || 6;
+      var maxHeight = rowHeight * 2 + gap;
+      var removed = 0, guard = 0;
+      while (container.scrollHeight > maxHeight + 1 && container.children.length > 0 && guard < 50) {
+        guard++;
+        var existingPlus = container.querySelector('.chip-plus');
+        var last = (existingPlus && container.lastElementChild === existingPlus)
+          ? container.children[container.children.length - 2] : container.lastElementChild;
+        if (!last) break;
+        container.removeChild(last);
+        removed++;
+        if (existingPlus) container.removeChild(existingPlus);
+        var plus = document.createElement('span');
+        plus.className = 'chip chip-plus';
+        plus.textContent = '+' + removed;
+        container.appendChild(plus);
+      }
+    });
   }
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    if (ok) return true;
-  } catch (e) { /* fall through */ }
-  return false;
+  if (flyoutTagsEl) truncateTags(flyoutTagsEl);
+
+  function position(){
+    var margin = 12;
+    var width = Math.min(280, window.innerWidth - margin * 2);
+    flyout.style.width = width + 'px';
+    flyout.style.maxHeight = (window.innerHeight - margin * 2) + 'px';
+    var rect = card.getBoundingClientRect();
+    var height = flyout.offsetHeight;
+    var left = rect.right + 16;
+    if (left + width > window.innerWidth - margin) left = rect.left - width - 16;
+    if (left < margin) left = Math.max(margin, Math.min(window.innerWidth - width - margin, rect.left));
+    var top = rect.top;
+    if (top + height > window.innerHeight - margin) top = window.innerHeight - height - margin;
+    if (top < margin) top = margin;
+    flyout.style.left = left + 'px';
+    flyout.style.top = top + 'px';
+  }
+  function open(pin){ position(); flyout.classList.add('is-open'); if (pin) pinned = true; }
+  function close(){ flyout.classList.remove('is-open'); pinned = false; }
+
+  [nameBtn, oneLinerBtn].forEach(function(el){
+    if (hoverCapable) el.addEventListener('mouseenter', function(){ if (!pinned) open(false); });
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (flyout.classList.contains('is-open') && pinned) close(); else open(true);
+    });
+  });
+  if (hoverCapable) card.addEventListener('mouseleave', function(){ if (!pinned) close(); });
+  closeBtn.addEventListener('click', function(e){ e.stopPropagation(); close(); });
+  document.addEventListener('click', function(e){ if (!e.target.closest('.card')) close(); });
+  window.addEventListener('resize', close);
+  window.addEventListener('scroll', close, { passive: true });
+
+  likeBtn.addEventListener('click', function(){
+    var pressed = likeBtn.getAttribute('aria-pressed') === 'true';
+    likeBtn.setAttribute('aria-pressed', String(!pressed));
+    likeBtn.innerHTML = !pressed ? HEART_FILLED : HEART_OUTLINE;
+  });
+})();
+`;
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(data.name)} 카드</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.css">
+<style>
+:root{${snapshotVars}}
+${EXPORT_CARD_CSS}
+</style>
+</head>
+<body>
+${cardHTML}
+<script>${script}<\/script>
+</body>
+</html>`;
 }
 
-function showManualCopyModal(text){
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
-  overlay.innerHTML = `
-    <div style="background:var(--panel);border:1px solid var(--ink);border-radius:0;padding:20px;max-width:520px;width:100%;box-sizing:border-box;">
-      <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px;">자동 복사가 지원되지 않는 환경이에요. 아래 코드가 전체 선택되어 있으니 Ctrl+C(맥은 ⌘+C)로 복사해서 붙여넣으세요.</p>
-      <textarea readonly style="width:100%;height:220px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--ink);border-radius:0;background:var(--bg);color:var(--text);box-sizing:border-box;"></textarea>
-      <button type="button" class="ccm-modal-close" style="margin-top:10px;width:100%;padding:9px;border:2px solid var(--ink);border-radius:0;background:var(--ink);color:var(--paper);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:11px;cursor:pointer;">닫기</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  const ta = overlay.querySelector('textarea');
-  ta.value = text;
-  ta.focus();
-  ta.select();
-  overlay.querySelector('.ccm-modal-close').addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-}
-
-async function copyTistorySnippet(card){
+function saveCardAsFile(card){
   const data = card._cardData;
-  const snippet = buildTistorySnippet(data);
+  const html = buildStandaloneCardHTML(data);
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(data.name || 'character').replace(/[\\/:*?"<>|]/g, '')}-card.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
   const btn = card.querySelector('.copy-btn');
   const original = btn.textContent;
-  const ok = await copyTextRobust(snippet);
-  if (ok) {
-    btn.textContent = '복사됨! 티스토리 HTML 모드에 붙여넣으세요';
-    setTimeout(() => { btn.textContent = original; }, 2000);
-  } else {
-    showManualCopyModal(snippet);
-  }
+  btn.textContent = '저장됨!';
+  setTimeout(() => { btn.textContent = original; }, 1600);
 }
 
 /* ---------------- form submit ---------------- */
