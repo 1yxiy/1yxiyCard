@@ -1,354 +1,876 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>캐릭터 프로필 카드 제너레이터</title>
-    <style>
-        :root { --point-color: #000000; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #1a1a1a;
-            padding: 20px;
-            flex-direction: row;
-            gap: 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>캐릭터 소개 카드 메이커</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.css">
+<style>
+  :root, [data-style="paper"][data-theme="light"]{
+    --screen:#cfc9bb;
+    --paper:#eee9dc;
+    --ink:#111214;
+    --muted:#77736b;
+    --blue:#2857d8;
+    --red:#c54d3f;
 
-        @media (max-width: 1024px) { body { flex-direction: column; padding: 10px; } }
+    --bg: var(--screen);
+    --panel: var(--paper);
+    --card: var(--paper);
+    --card-border: var(--ink);
+    --chip-bg: transparent;
+    --chip-border: var(--ink);
+    --chip-text: var(--ink);
+    --text: var(--ink);
+    --text-dim: var(--muted);
+    --accent: var(--blue);
+    --accent-soft: rgba(40,87,216,.14);
+    --flyout-bg: var(--paper);
+    --flyout-border: var(--ink);
+    --backdrop: rgba(17,18,20,.45);
+    --thumb-grad: linear-gradient(135deg,#e2ddd0,#cfc9bb);
+    --radius-lg: 0px;
+    --radius-sm: 0px;
+    --radius-flyout: 0px;
+    --label-transform: uppercase;
+    --tick-display: inline-block;
+    --card-shadow: 6px 6px 0 var(--ink);
+    --hero-border: 2px solid var(--ink);
+  }
+  [data-style="paper"][data-theme="dark"]{
+    --screen:#141310;
+    --paper:#1e1c17;
+    --ink:#eee9dc;
+    --muted:#8f897c;
+    --blue:#7b98ff;
+    --red:#e2685a;
 
-        .controls {
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 15px;
-            color: #fff;
-            width: 350px;
-            max-width: 100%;
-            flex-shrink: 0;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+    --bg: var(--screen);
+    --panel: var(--paper);
+    --card: var(--paper);
+    --card-border: var(--ink);
+    --chip-bg: transparent;
+    --chip-border: var(--ink);
+    --chip-text: var(--ink);
+    --text: var(--ink);
+    --text-dim: var(--muted);
+    --accent: var(--blue);
+    --accent-soft: rgba(123,152,255,.18);
+    --flyout-bg: var(--paper);
+    --flyout-border: var(--ink);
+    --backdrop: rgba(0,0,0,.6);
+    --thumb-grad: linear-gradient(135deg,#28251d,#141310);
+    --radius-lg: 0px;
+    --radius-sm: 0px;
+    --radius-flyout: 0px;
+    --label-transform: uppercase;
+    --tick-display: inline-block;
+    --card-shadow: 6px 6px 0 var(--ink);
+    --hero-border: 2px solid var(--ink);
+  }
+  [data-style="simple"][data-theme="light"]{
+    --screen:#f3f3f4;
+    --paper:#ffffff;
+    --ink:#17171a;
+    --muted:#6b6b70;
+    --blue:#17171a;
+    --red:#c0392b;
 
-        .controls h3 { margin-bottom: 15px; font-size: 18px; font-weight: 700; }
-        .section-divider { margin: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-        .controls label { display: block; margin-bottom: 15px; font-size: 14px; font-weight: 600; }
-        .label-text { display: block; margin-bottom: 8px; }
-        
-        .controls input[type="text"], .controls textarea {
-            width: 100%; padding: 10px 12px; margin-top: 5px; border-radius: 12px;
-            border: none; background: #2c2c2e; color: #fff; font-family: inherit; font-size: 14px;
-        }
-        .controls textarea { min-height: 60px; resize: vertical; }
+    --bg: var(--screen);
+    --panel: var(--paper);
+    --card: var(--paper);
+    --card-border: #e2e2e6;
+    --chip-bg: transparent;
+    --chip-border: #dcdce1;
+    --chip-text: var(--ink);
+    --text: var(--ink);
+    --text-dim: var(--muted);
+    --accent: var(--blue);
+    --accent-soft: rgba(23,23,26,.08);
+    --flyout-bg: var(--paper);
+    --flyout-border: #e2e2e6;
+    --backdrop: rgba(0,0,0,.35);
+    --thumb-grad: linear-gradient(135deg,#f1f1f3,#e4e4e8);
+    --radius-lg: 16px;
+    --radius-sm: 10px;
+    --radius-flyout: 14px;
+    --label-transform: none;
+    --tick-display: none;
+    --card-shadow: 0 18px 40px rgba(0,0,0,.16);
+    --hero-border: 1px solid var(--card-border);
+  }
+  [data-style="simple"][data-theme="dark"]{
+    --screen:#0f0f11;
+    --paper:#1a1a1d;
+    --ink:#f2f2f4;
+    --muted:#9a9aa2;
+    --blue:#f2f2f4;
+    --red:#e2685a;
 
-        .label-input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 5px;
-        }
+    --bg: var(--screen);
+    --panel: var(--paper);
+    --card: var(--paper);
+    --card-border: #2a2a2e;
+    --chip-bg: transparent;
+    --chip-border: #303036;
+    --chip-text: var(--ink);
+    --text: var(--ink);
+    --text-dim: var(--muted);
+    --accent: var(--blue);
+    --accent-soft: rgba(242,242,244,.12);
+    --flyout-bg: var(--paper);
+    --flyout-border: #2a2a2e;
+    --backdrop: rgba(0,0,0,.6);
+    --thumb-grad: linear-gradient(135deg,#242428,#141416);
+    --radius-lg: 16px;
+    --radius-sm: 10px;
+    --radius-flyout: 14px;
+    --label-transform: none;
+    --tick-display: none;
+    --card-shadow: 0 18px 40px rgba(0,0,0,.5);
+    --hero-border: 1px solid var(--card-border);
+  }
 
-        .label-input-group input {
-            flex: 1;
-            padding: 6px 10px;
-            font-size: 12px;
-            border-radius: 8px;
-            background: #3a3a3c;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-        }
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{margin:0;padding:0;background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:'Pretendard', system-ui, sans-serif; -webkit-font-smoothing:antialiased; transition:background .2s ease, color .2s ease; overflow-x:hidden;}
+  html[data-style="paper"] body:before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.09; z-index:5;
+    background-image:radial-gradient(var(--ink) 0.55px, transparent .55px);
+    background-size:4px 4px;
+  }
 
-        .color-input-group { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
-        .color-preview { width: 50px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; }
-        input[type="color"], input[type="file"] { display: none; }
+  .page{max-width:1180px;margin:0 auto;padding:32px 24px 80px; position:relative;}
 
-        .image-upload-area { border: 2px dashed rgba(255,255,255,0.3); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
-        .preview-image { width: 100%; max-height: 100px; object-fit: contain; border-radius: 12px; }
+  .hero{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:32px; padding-bottom:14px; border-bottom:var(--hero-border);}
+  .hero h1{font-family:'Pretendard', sans-serif; font-weight:900; font-size:clamp(22px,3.4vw,34px); margin:0 0 6px; letter-spacing:-0.04em; line-height:.95; text-transform:var(--label-transform);}
+  .hero p{color:var(--muted); margin:0; font-size:11px; letter-spacing:.01em; line-height:1.6; max-width:520px;}
 
-        .controls button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-        .btn-apply { background: #5856D6; color: white; margin-bottom: 10px; }
-        .btn-save { background: #34C759; color: white; }
-        .btn-reset { background: #FF3B30; color: white; }
-        button:hover { opacity: 0.8; }
+  .theme-toggle{flex-shrink:0; height:34px; padding:0 14px; border-radius:0; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; font:800 10px 'Pretendard',sans-serif; letter-spacing:.1em; text-transform:var(--label-transform); display:flex; align-items:center; justify-content:center;}
+  .theme-toggle:hover{background:var(--ink); color:var(--paper);}
 
-        small { color: #8e8e93; font-size: 11px; display: block; margin-top: 3px; }
+  .layout{display:grid; grid-template-columns:300px 1fr; gap:28px; align-items:start;}
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} }
 
-        .card-container { width: 390px; display: flex; flex-direction: column; align-items: center; }
-        .preview-label { color: white; font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: 1px; }
-        
-        .profile-card-final {
-            width: 360px; height: 480px; background: #fff; border-radius: 32px; padding: 26px;
-            display: flex; flex-direction: column; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-            position: relative; overflow: hidden;
-        }
+  /* ---------- form ---------- */
+  .form-panel{position:sticky; top:24px; background:var(--panel); border:1px solid var(--ink); border-radius:0; padding:20px;}
+  @media (max-width:860px){ .form-panel{position:static;} }
+  .form-panel h2{font-size:11px; letter-spacing:.12em; text-transform:var(--label-transform); margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--ink); font-weight:900;}
+  .field{margin-bottom:14px;}
+  .field label{display:flex; align-items:center; font-size:10px; letter-spacing:.08em; font-weight:800; text-transform:var(--label-transform); color:var(--ink); margin-bottom:8px;}
+  .field label:before{content:""; display:var(--tick-display); width:14px; border-top:2px solid var(--blue); margin-right:6px; flex-shrink:0;}
+  .field input[type="text"], .field textarea{
+    width:100%; background:transparent; border:0; border-bottom:1px solid var(--ink); border-radius:0;
+    color:var(--text); font-size:13px; padding:8px 2px; font-family:inherit; resize:vertical;
+  }
+  .field textarea{min-height:64px; line-height:1.5;}
+  .field input:focus, .field textarea:focus{outline:none; border-bottom:2px solid var(--blue);}
 
-        .emoji-sticker { position: absolute; top: 22px; right: 26px; font-size: 34px; z-index: 5; }
-        
-        .header { display: flex; gap: 16px; margin-bottom: 18px; min-height: 100px; }
-        .photo { 
-            width: 100px; 
-            height: 100px; 
-            border-radius: 24px; 
-            background: #f0f0f0; 
-            object-fit: cover;
-            object-position: center;
-            border: 2px solid var(--point-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
-        }
-        
-        .name-box { flex: 1; padding-top: 10px; }
-        .name { font-size: 26px; font-weight: 900; color: #222; min-height: 32px; }
-        .one-liner { font-size: 11px; color: var(--point-color); font-weight: 700; margin-top: 6px; line-height: 1.4; word-break: break-all; }
+  .color-row{display:flex; gap:8px;}
+  .color-row input[type="color"]{width:44px; height:38px; padding:2px; border:1px solid var(--ink); border-radius:0; background:transparent; cursor:pointer; flex-shrink:0;}
+  .color-row input[type="text"]{flex:1; border-bottom:1px solid var(--ink) !important;}
 
-        .quote-bubble {
-            background-color: var(--point-color); color: white; padding: 12px 16px; min-height: 44px;
-            display: none; align-items: center; border-radius: 16px 16px 16px 4px;
-            font-size: 13px; font-weight: 600; margin-bottom: 20px; line-height: 1.4; word-break: break-all;
-        }
+  .file-input{display:none;}
+  .file-btn{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:9px; border:1px dashed var(--ink); border-radius:0; background:transparent; color:var(--muted); font-size:11px; font-weight:700; text-transform:var(--label-transform); letter-spacing:.04em; cursor:pointer; text-align:center;}
+  .file-btn:hover{background:var(--ink); color:var(--paper); border-style:solid;}
+  .file-btn.has-file{border-style:solid; color:var(--text); border-color:var(--blue);}
 
-        .info-wrap { display: flex; flex-direction: column; gap: 10px; }
-        .card-item { background: #fafafa; border-radius: 18px; padding: 12px 14px; border: 1px dashed #ddd; display: none; }
-        .label { font-size: 9px; font-weight: 800; color: #aaa; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .desc { font-size: 11.5px; line-height: 1.5; color: #444; white-space: pre-wrap; word-break: break-all; }
+  .mode-toggle{display:flex; gap:4px; margin-bottom:12px;}
+  .mode-toggle label{flex:1; text-align:center; font-size:11px; font-weight:800; text-transform:var(--label-transform); letter-spacing:.03em; padding:8px 6px; border:1px solid var(--ink); border-radius:0; cursor:pointer; color:var(--ink);}
+  .mode-toggle input{display:none;}
+  .mode-toggle label:hover{background:var(--ink); color:var(--paper);}
+  .mode-toggle label:has(input:checked){border-color:var(--blue); background:var(--blue); color:#fff;}
 
-        .tags { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; }
-        
-        .tag-pill {
-            background: white;
-            color: var(--point-color);
-            border: 1.5px solid var(--point-color);
-            padding: 0 10px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 700;
-            white-space: nowrap;
-            line-height: 1;
-        }
+  .time-row{display:flex; gap:8px;}
+  .time-row .sub{flex:1;}
+  .time-row .sub span{display:block; font-size:10px; letter-spacing:.06em; text-transform:var(--label-transform); color:var(--muted); margin-bottom:4px;}
 
-        .tag-pill span {
-            margin-left: 2px;
-        }
-    </style>
+  .field-row{display:flex; align-items:center; gap:8px; margin-bottom:16px;}
+  .field-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--blue);}
+  .field-row label{font-size:11px; font-weight:700; text-transform:var(--label-transform); letter-spacing:.03em; color:var(--muted);}
+
+  .submit-btn{width:100%; padding:13px; border:2px solid var(--ink); border-radius:0; background:var(--ink); color:var(--paper); font-weight:900; font-size:11px; letter-spacing:.1em; text-transform:var(--label-transform); cursor:pointer;}
+  .submit-btn:hover{background:var(--blue); border-color:var(--blue);}
+
+  /* ---------- grid & card (live preview) ---------- */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:20px;}
+  .card{position:relative; background:var(--card); border:1px solid var(--ink); border-radius:0; padding:14px; min-width:0;}
+
+  .thumb-wrap{position:relative; width:100%; aspect-ratio:1/1; border-radius:0; overflow:hidden; background:var(--thumb-grad); border:1px solid var(--ink); margin-bottom:12px;}
+  .thumb-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
+  .nsfw-badge{position:absolute; top:8px; right:8px; background:var(--red); color:#fff; font-size:9px; font-weight:900; letter-spacing:.06em; padding:3px 7px; border-radius:0;}
+
+  .name-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .name-trigger{background:none; border:none; padding:0; margin:0; text-align:left; font-family:'Pretendard', sans-serif; font-weight:800; letter-spacing:-.01em; font-size:16px; color:var(--text); cursor:pointer; overflow-wrap:anywhere; word-break:break-word;}
+  .id-inline{font-weight:400; color:var(--muted); font-size:12px; margin-left:2px;}
+  .like-btn{background:none; border:1px solid var(--ink); border-radius:0; width:28px; height:28px; cursor:pointer; padding:0; flex-shrink:0; color:var(--muted); display:flex; align-items:center; justify-content:center;}
+  .like-btn svg{width:16px; height:16px;}
+  .like-btn:hover{background:var(--ink);}
+  .like-btn:hover svg{stroke:var(--paper);}
+  .like-btn[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft);}
+  .like-btn[aria-pressed="true"] svg{fill:var(--accent); stroke:var(--accent);}
+
+  .oneliner-trigger{display:-webkit-box; width:100%; background:none; border:none; padding:0; margin:8px 0 10px; text-align:left; cursor:pointer;
+    font-size:13px; line-height:1.5; color:var(--muted); -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    overflow-wrap:anywhere; word-break:break-word;}
+
+  .front-slot{margin-bottom:2px; min-width:0;}
+  .tags-row{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{font-size:10px; font-weight:700; text-transform:var(--label-transform); letter-spacing:.03em; padding:4px 8px; border-radius:0; background:transparent; border:1px solid var(--ink); color:var(--chip-text); white-space:nowrap;}
+  .chip-plus{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:800;}
+
+  .music-bar{display:flex; align-items:center; gap:10px; min-width:0;}
+  .music-track{flex:1; height:2px; background:var(--ink); border-radius:0; position:relative; min-width:0;}
+  .music-progress{position:absolute; left:0; top:0; height:100%; width:0%; background:var(--accent); border-radius:0;}
+  .music-dot{position:absolute; top:50%; left:0%; width:9px; height:9px; border-radius:0; background:var(--accent); border:1px solid var(--paper); transform:translate(-50%,-50%);}
+  .music-time{font-size:10px; letter-spacing:.03em; color:var(--muted); white-space:nowrap; flex-shrink:0;}
+
+  .copy-btn{margin-top:12px; width:100%; padding:8px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:var(--label-transform); border-radius:0; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;}
+  .copy-btn:hover{background:var(--ink); color:var(--paper);}
+
+  /* ---------- flyout (side panel, positioned via JS — same behavior on mobile & desktop) ---------- */
+  .flyout{position:fixed; width:260px; z-index:40; background:var(--flyout-bg); border:1px solid var(--flyout-border);
+    border-radius:var(--radius-flyout); padding:18px; box-shadow:var(--card-shadow); opacity:0; visibility:hidden;
+    transition:opacity .15s ease; box-sizing:border-box; overflow-y:auto;}
+  .flyout.is-open{opacity:1; visibility:visible;}
+
+  .eyebrow{display:flex; align-items:center; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:var(--label-transform); color:var(--muted); margin-bottom:8px;}
+  .eyebrow:before{content:""; display:var(--tick-display); width:14px; border-top:2px solid var(--blue); margin-right:6px; flex-shrink:0;}
+
+  .flyout-close{position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:0; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;}
+  .flyout-close:hover{background:var(--ink); color:var(--paper);}
+  .flyout-name{font-family:'Pretendard', sans-serif; font-weight:800; font-size:17px; margin:0 24px 10px 0; overflow-wrap:anywhere; word-break:break-word;}
+  .flyout-tags{display:flex; flex-wrap:wrap; gap:6px; max-height:56px; overflow:hidden; margin-bottom:12px;}
+  .flyout-divider{border:none; border-top:1px dashed var(--muted); margin:0 0 12px;}
+  .flyout-desc{max-height:180px; overflow-y:auto; overflow-x:hidden; font-size:13px; line-height:1.7; color:var(--text); opacity:.9;
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; padding-right:4px; margin-bottom:14px;}
+  .flyout-desc::-webkit-scrollbar{width:5px;}
+  .flyout-desc::-webkit-scrollbar-thumb{background:var(--ink); border-radius:0;}
+  .flyout-creator{text-align:right; font-size:12px; color:var(--muted); overflow-wrap:anywhere;}
+
+  .backdrop{position:fixed; inset:0; background:var(--backdrop); z-index:29; opacity:0; visibility:hidden; transition:opacity .15s ease;}
+  .backdrop.is-open{opacity:1; visibility:visible;}
+
+  .note{font-size:11px; color:var(--muted); line-height:1.5; margin-top:6px;}
+
+  .toolbar{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; align-items:center;}
+  .toolbar input[type="text"]{flex:1; min-width:180px; background:transparent; border:0; border-bottom:1px solid var(--ink); border-radius:0; color:var(--text); font-size:13px; padding:9px 4px;}
+  .toolbar input[type="text"]:focus{outline:none; border-bottom:2px solid var(--blue);}
+  .toolbar-btn{flex-shrink:0; padding:9px 14px; border-radius:0; border:1px solid var(--ink); background:transparent; color:var(--ink); font-size:10px; font-weight:800; text-transform:var(--label-transform); letter-spacing:.05em; cursor:pointer;}
+  .toolbar-btn:hover{background:var(--ink); color:var(--paper);}
+</style>
 </head>
 <body>
-    <div class="controls">
-        <h3>카드 설정</h3>
-        <label>
-            <span class="label-text">포인트 컬러</span>
-            <div class="color-input-group">
-                <div class="color-preview" id="colorPreview" onclick="document.getElementById('colorPicker').click()" style="background-color: #000000;"></div>
-                <input type="color" id="colorPicker" value="#000000">
-                <input type="text" id="hexInput" value="#000000" maxlength="7">
-            </div>
-        </label>
-        <div class="section-divider"></div>
-        <label><span class="label-text">대표 이모지</span><input type="text" id="emoji" placeholder="😀"></label>
-        <label><span class="label-text">이름</span><input type="text" id="name" placeholder="이름 입력"></label>
-        <label><span class="label-text">한 줄 소개</span><textarea id="oneLiner" placeholder="한 줄 소개 입력"></textarea></label>
-        <div class="section-divider"></div>
-        <label>
-            <span class="label-text">프로필 사진</span>
-            <div class="image-upload-area" onclick="document.getElementById('photoInput').click()">
-                <img id="previewImg" class="preview-image" style="display:none;">
-                <div id="uploadText"><p style="color: #8e8e93; font-size: 13px;">📷 사진 업로드</p></div>
-            </div>
-            <input type="file" id="photoInput" accept="image/*">
-        </label>
-        <div class="section-divider"></div>
-        <label><span class="label-text">캐릭터 한마디</span><input type="text" id="quote" placeholder="대사 입력"></label>
-        
-        <label>
-            <span class="label-text">항목 1</span>
-            <div class="label-input-group">
-                <input type="text" id="label1" placeholder="라벨 (예: Personality)" value="Personality">
-            </div>
-            <textarea id="content1" placeholder="내용 입력"></textarea>
-            <small>라벨 이름을 변경할 수 있어요</small>
-        </label>
-
-        <label>
-            <span class="label-text">항목 2</span>
-            <div class="label-input-group">
-                <input type="text" id="label2" placeholder="라벨 (예: Appearance)" value="Appearance">
-            </div>
-            <textarea id="content2" placeholder="내용 입력"></textarea>
-            <small>라벨 이름을 변경할 수 있어요</small>
-        </label>
-
-        <label><span class="label-text">태그</span><input type="text" id="tagInput" placeholder="태그1, 태그2"></label>
-        <div class="section-divider"></div>
-        <button class="btn-apply" onclick="updatePreview()">카드 설정 적용</button>
-        <button class="btn-save" onclick="saveAsImage()">이미지로 저장</button>
-        <button class="btn-reset" onclick="resetCard()">초기화</button>
+<div class="backdrop" id="backdrop"></div>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>캐릭터 소개 카드 메이커</h1>
+      <p>정보를 입력해 카드를 추가하세요. 이름을 클릭하면 상세 소개가 열리고 고정됩니다. "티스토리용 코드 복사"는 스타일/스크립트 태그 없이 인라인 스타일 + &lt;details&gt;만으로 만들어져 블로그에 붙여넣어도 그대로 유지됩니다.</p>
     </div>
+    <div style="display:flex; gap:8px;">
+      <button type="button" class="theme-toggle" id="styleToggle" title="페이퍼 에디션 / 심플 스타일 전환"></button>
+      <button type="button" class="theme-toggle" id="themeToggle" title="다크/라이트 모드 전환"></button>
+    </div>
+  </div>
 
-    <div class="card-container">
-        <div class="preview-label">PREVIEW</div>
-        <div class="profile-card-final" id="previewCard">
-            <div class="emoji-sticker" id="p-emoji"></div>
-            <div class="header">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="photo" id="p-photo">
-                <div class="name-box">
-                    <div class="name" id="p-name"></div>
-                    <div class="one-liner" id="p-oneLiner"></div>
-                </div>
-            </div>
-            <div class="quote-bubble" id="p-quote"></div>
-            <div class="info-wrap">
-                <div class="card-item" id="item-1">
-                    <span class="label" id="p-label1">Personality</span>
-                    <div class="desc" id="p-content1"></div>
-                </div>
-                <div class="card-item" id="item-2">
-                    <span class="label" id="p-label2">Appearance</span>
-                    <div class="desc" id="p-content2"></div>
-                </div>
-            </div>
-            <div class="tags" id="p-tags"></div>
+  <div class="layout">
+    <aside class="form-panel">
+      <h2>카드 추가</h2>
+      <form id="cardForm">
+        <div class="field">
+          <label>썸네일 이미지</label>
+          <input type="file" id="thumbFile" class="file-input" accept="image/*">
+          <label for="thumbFile" class="file-btn" id="thumbBtn">파일 선택</label>
         </div>
+        <div class="field">
+          <label for="name">캐릭터 이름</label>
+          <input type="text" id="name" required placeholder="예: 윤">
+        </div>
+        <div class="field">
+          <label for="creator">제작자 아이디</label>
+          <input type="text" id="creator" placeholder="@seita">
+        </div>
+        <div class="field">
+          <label for="oneliner">한마디</label>
+          <textarea id="oneliner" required placeholder="카드에 보일 짧은 한마디"></textarea>
+        </div>
+        <div class="field">
+          <label for="desc">소개 (상세, 클릭 시 펼쳐짐)</label>
+          <textarea id="desc" style="min-height:100px" placeholder="세계관, 설정, 대사 등 자유롭게"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="accentColorText">포인트 컬러 (하트 · 재생바)</label>
+          <div class="color-row">
+            <input type="color" id="accentColorPicker" value="#ff4b3e">
+            <input type="text" id="accentColorText" value="#ff4b3e" placeholder="#ff4b3e">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>카드 앞면 표시 항목</label>
+          <div class="mode-toggle">
+            <label><input type="radio" name="frontMode" value="tags" checked><span>태그</span></label>
+            <label><input type="radio" name="frontMode" value="music"><span>재생바</span></label>
+          </div>
+        </div>
+
+        <div class="field" id="tagsField">
+          <label for="tags">태그 (쉼표로 구분, 상세 박스에도 표시됨)</label>
+          <input type="text" id="tags" placeholder="#아포칼립스, #SF, #오리지널">
+        </div>
+
+        <div class="field" id="musicField" hidden>
+          <label>재생 위치 (분:초)</label>
+          <div class="time-row">
+            <div class="sub"><span>현재</span><input type="text" id="musicCurrent" placeholder="0:32"></div>
+            <div class="sub"><span>전체</span><input type="text" id="musicDuration" placeholder="3:45"></div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <input type="checkbox" id="liked">
+          <label for="liked">좋아요 초기 상태 켜기</label>
+        </div>
+        <div class="field-row">
+          <input type="checkbox" id="nsfw">
+          <label for="nsfw">NSFW 배지 표시</label>
+        </div>
+        <button type="submit" class="submit-btn">카드 추가하기</button>
+      </form>
+    </aside>
+
+    <div style="min-width:0;">
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="이름 또는 태그로 검색">
+        <button type="button" class="toolbar-btn" id="exportBtn">JSON 내보내기</button>
+        <button type="button" class="toolbar-btn" id="importBtn">JSON 불러오기</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+      <main class="grid" id="cardGrid"></main>
     </div>
+  </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script>
-        let originalImageData = null;
-        let croppedImageData = null;
+<script>
+/* ---------------- theme ---------------- */
+const root = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const styleToggle = document.getElementById('styleToggle');
+const THEME_PREF_KEY = 'ccm_theme_pref_v1';
 
-        function updateColor(color) {
-            document.documentElement.style.setProperty('--point-color', color);
-            document.getElementById('colorPreview').style.backgroundColor = color;
-            document.getElementById('hexInput').value = color.toUpperCase();
-            document.getElementById('colorPicker').value = color;
-        }
+function applyThemePrefs(style, mode){
+  root.setAttribute('data-style', style);
+  root.setAttribute('data-theme', mode);
+  styleToggle.textContent = style === 'paper' ? 'SIMPLE' : 'PAPER ED.';
+  themeToggle.textContent = mode === 'light' ? 'NIGHT' : 'DAY';
+  try { localStorage.setItem(THEME_PREF_KEY, JSON.stringify({ style, mode })); } catch (e) { /* ignore */ }
+}
 
-        document.getElementById('colorPicker').addEventListener('input', (e) => updateColor(e.target.value));
-        document.getElementById('hexInput').addEventListener('input', (e) => {
-            let val = e.target.value;
-            if (/^#[0-9A-Fa-f]{6}$/.test(val)) updateColor(val);
-        });
+let _themeStyle = 'paper', _themeMode = 'light';
+try {
+  const saved = JSON.parse(localStorage.getItem(THEME_PREF_KEY) || 'null');
+  if (saved && saved.style && saved.mode) { _themeStyle = saved.style; _themeMode = saved.mode; }
+} catch (e) { /* ignore */ }
+applyThemePrefs(_themeStyle, _themeMode);
 
-        document.getElementById('photoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                originalImageData = event.target.result;
-                
-                // 고화질로 정사각형 크롭
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const size = Math.min(img.width, img.height);
-                    
-                    // 고화질 유지 (원본 크기 또는 최대 1000px)
-                    const targetSize = Math.min(size, 1000);
-                    canvas.width = targetSize;
-                    canvas.height = targetSize;
-                    
-                    const offsetX = (img.width - size) / 2;
-                    const offsetY = (img.height - size) / 2;
-                    
-                    ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, targetSize, targetSize);
-                    
-                    croppedImageData = canvas.toDataURL('image/png', 1.0);
-                    
-                    document.getElementById('previewImg').src = croppedImageData;
-                    document.getElementById('previewImg').style.display = 'block';
-                    document.getElementById('uploadText').style.display = 'none';
-                };
-                img.src = originalImageData;
-            };
-            reader.readAsDataURL(file);
-        });
+styleToggle.addEventListener('click', () => {
+  _themeStyle = _themeStyle === 'paper' ? 'simple' : 'paper';
+  applyThemePrefs(_themeStyle, _themeMode);
+});
+themeToggle.addEventListener('click', () => {
+  _themeMode = _themeMode === 'dark' ? 'light' : 'dark';
+  applyThemePrefs(_themeStyle, _themeMode);
+});
 
-        function updatePreview() {
-            const ui = (id) => document.getElementById(id).value;
-            const setDisplay = (id, val, disp = 'flex') => {
-                document.getElementById(id).style.display = val ? disp : 'none';
-            };
+/* ---------------- shared refs ---------------- */
+const grid = document.getElementById('cardGrid');
+const form = document.getElementById('cardForm');
+const backdrop = document.getElementById('backdrop');
+const hoverCapable = window.matchMedia('(hover: hover)').matches;
+const isMobileLayout = () => window.innerWidth <= 860;
+let cardCount = 0;
+const STORAGE_KEY = 'ccm_cards_v1';
+let cardsData = [];
+function genId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function saveCards(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cardsData)); } catch (e) { /* storage unavailable, ignore */ }
+}
+function loadCards(){
+  let raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return false; }
+  if (raw === null) return false;
+  let arr;
+  try { arr = JSON.parse(raw); } catch (e) { return false; }
+  if (!Array.isArray(arr)) return false;
+  arr.forEach(d => { cardsData.push(d); grid.appendChild(buildCard(d)); });
+  return true;
+}
 
-            document.getElementById('p-emoji').textContent = ui('emoji');
-            document.getElementById('p-name').textContent = ui('name');
-            document.getElementById('p-oneLiner').innerHTML = ui('oneLiner').replace(/\n/g, '<br>');
-            
-            const quote = ui('quote');
-            document.getElementById('p-quote').textContent = quote;
-            setDisplay('p-quote', quote, 'flex');
+const HEART_OUTLINE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`;
+const HEART_FILLED = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`;
 
-            if(croppedImageData) {
-                document.getElementById('p-photo').src = croppedImageData;
-            }
+/* ---------------- form: file input, accent color sync, mode toggle ---------------- */
+function fileToDataURL(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+const thumbFile = document.getElementById('thumbFile');
+const thumbBtn = document.getElementById('thumbBtn');
+thumbFile.addEventListener('change', () => {
+  thumbBtn.textContent = thumbFile.files[0] ? thumbFile.files[0].name : '파일 선택';
+  thumbBtn.classList.toggle('has-file', !!thumbFile.files[0]);
+});
 
-            // 항목 1
-            const label1 = ui('label1');
-            const content1 = ui('content1');
-            document.getElementById('p-label1').textContent = label1;
-            document.getElementById('p-content1').textContent = content1;
-            setDisplay('item-1', content1, 'block');
+const accentPicker = document.getElementById('accentColorPicker');
+const accentText = document.getElementById('accentColorText');
+accentPicker.addEventListener('input', () => { accentText.value = accentPicker.value; });
+accentText.addEventListener('input', () => {
+  let v = accentText.value.trim();
+  if (v && !v.startsWith('#')) v = '#' + v;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) accentPicker.value = v;
+});
 
-            // 항목 2
-            const label2 = ui('label2');
-            const content2 = ui('content2');
-            document.getElementById('p-label2').textContent = label2;
-            document.getElementById('p-content2').textContent = content2;
-            setDisplay('item-2', content2, 'block');
+const tagsField = document.getElementById('tagsField');
+const musicField = document.getElementById('musicField');
+document.querySelectorAll('input[name="frontMode"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const mode = document.querySelector('input[name="frontMode"]:checked').value;
+    tagsField.hidden = mode === 'music';
+    musicField.hidden = mode !== 'music';
+  });
+});
 
-            const tagContainer = document.getElementById('p-tags');
-            tagContainer.innerHTML = '';
-            const tags = ui('tagInput');
-            if(tags) {
-                tags.split(',').forEach(t => {
-                    const tag = t.trim();
-                    if(tag) tagContainer.innerHTML += `<span class="tag-pill">#<span>${tag}</span></span>`;
-                });
-            }
-        }
+/* ---------------- tag chip helpers (live preview) ---------------- */
+function makeChip(text, isPlus){
+  const span = document.createElement('span');
+  span.className = 'chip' + (isPlus ? ' chip-plus' : '');
+  span.textContent = text;
+  return span;
+}
+function fillCardTags(container, tags){
+  container.innerHTML = '';
+  const shown = tags.slice(0, 3);
+  shown.forEach(t => container.appendChild(makeChip(t, false)));
+  if (tags.length > 3) container.appendChild(makeChip('+' + (tags.length - 3), true));
+}
+function fillFlyoutTags(container, tags){
+  container.innerHTML = '';
+  if (tags.length === 0) return;
+  tags.forEach(t => container.appendChild(makeChip(t, false)));
+  requestAnimationFrame(() => {
+    const first = container.firstElementChild;
+    if (!first) return;
+    const rowHeight = first.offsetHeight;
+    const gap = parseFloat(getComputedStyle(container).rowGap || 6) || 6;
+    const maxHeight = rowHeight * 2 + gap;
+    let removed = 0, guard = 0;
+    while (container.scrollHeight > maxHeight + 1 && container.children.length > 0 && guard < 50) {
+      guard++;
+      const existingPlus = container.querySelector('.chip-plus');
+      const last = existingPlus && container.lastElementChild === existingPlus
+        ? container.children[container.children.length - 2]
+        : container.lastElementChild;
+      if (!last) break;
+      container.removeChild(last);
+      removed++;
+      if (existingPlus) container.removeChild(existingPlus);
+      container.appendChild(makeChip('+' + removed, true));
+    }
+  });
+}
 
-        async function saveAsImage() {
-            const card = document.getElementById('previewCard');
-            
-            const canvas = await html2canvas(card, { 
-                backgroundColor: null, 
-                scale: 5, 
-                useCORS: true,
-                allowTaint: true,
-                imageSmoothingEnabled: false
-            });
-            
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/png', 1.0);
-            a.download = `${document.getElementById('name').value || 'character'}_card.png`;
-            a.click();
-        }
+/* ---------------- time helpers (shared by live preview + export) ---------------- */
+function parseTime(str){
+  if (!str) return 0;
+  const parts = str.split(':').map(n => parseInt(n, 10));
+  if (parts.some(isNaN)) return 0;
+  if (parts.length === 1) return parts[0];
+  return parts[0] * 60 + parts[1];
+}
+function fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+function buildMusicBar(currentStr, durationStr){
+  const currentSec = parseTime(currentStr || '0:00');
+  const durationSec = parseTime(durationStr || '0:00');
+  const pct = durationSec > 0 ? Math.min(100, Math.max(0, (currentSec / durationSec) * 100)) : 0;
+  const wrap = document.createElement('div');
+  wrap.className = 'music-bar';
+  wrap.innerHTML = `
+    <div class="music-track">
+      <div class="music-progress" style="width:${pct}%"></div>
+      <div class="music-dot" style="left:${pct}%"></div>
+    </div>
+    <span class="music-time">${fmtTime(currentSec)} / ${fmtTime(durationSec)}</span>
+  `;
+  return wrap;
+}
 
-        function resetCard() {
-            ['emoji', 'name', 'oneLiner', 'quote', 'tagInput', 'content1', 'content2'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('label1').value = 'Personality';
-            document.getElementById('label2').value = 'Appearance';
-            document.getElementById('previewImg').style.display = 'none';
-            document.getElementById('uploadText').style.display = 'block';
-            document.getElementById('photoInput').value = '';
-            originalImageData = null;
-            croppedImageData = null;
-            updateColor('#000000');
-            
-            // 프리뷰 초기화 (빈 상태)
-            document.getElementById('p-emoji').textContent = '';
-            document.getElementById('p-name').textContent = '';
-            document.getElementById('p-oneLiner').innerHTML = '';
-            document.getElementById('p-quote').style.display = 'none';
-            document.getElementById('p-photo').src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            document.getElementById('item-1').style.display = 'none';
-            document.getElementById('item-2').style.display = 'none';
-            document.getElementById('p-tags').innerHTML = '';
-        }
-    </script>
+/* ---------------- flyout open/close (pin-aware, live preview only) ---------------- */
+function anyMobileOpen(){ return !!document.querySelector('.flyout.is-open') && isMobileLayout(); }
+function syncBackdrop(){ backdrop.classList.toggle('is-open', anyMobileOpen()); }
+function closeFlyout(card){
+  const flyout = card.querySelector('.flyout');
+  flyout.classList.remove('is-open');
+  flyout.dataset.pinned = 'false';
+  syncBackdrop();
+}
+function closeAllFlyouts(){ document.querySelectorAll('.card').forEach(closeFlyout); }
+
+function positionFlyout(card, flyout){
+  const margin = 12;
+  const width = Math.min(280, window.innerWidth - margin * 2);
+  flyout.style.width = width + 'px';
+  flyout.style.maxHeight = (window.innerHeight - margin * 2) + 'px';
+  const rect = card.getBoundingClientRect();
+  const height = flyout.offsetHeight;
+  let left = rect.right + 16;
+  if (left + width > window.innerWidth - margin) left = rect.left - width - 16;
+  if (left < margin) left = Math.max(margin, Math.min(window.innerWidth - width - margin, rect.left));
+  let top = rect.top;
+  if (top + height > window.innerHeight - margin) top = window.innerHeight - height - margin;
+  if (top < margin) top = margin;
+  flyout.style.left = left + 'px';
+  flyout.style.top = top + 'px';
+}
+
+function openFlyout(card, { pin } = {}){
+  document.querySelectorAll('.card').forEach(c => { if (c !== card) closeFlyout(c); });
+  const flyout = card.querySelector('.flyout');
+  positionFlyout(card, flyout);
+  flyout.classList.add('is-open');
+  if (pin) flyout.dataset.pinned = 'true';
+  syncBackdrop();
+}
+backdrop.addEventListener('click', closeAllFlyouts);
+document.addEventListener('click', (e) => { if (!e.target.closest('.card')) closeAllFlyouts(); });
+window.addEventListener('scroll', closeAllFlyouts, { passive: true });
+
+/* ---------------- build a card (live preview) ---------------- */
+function buildCard(data){
+  cardCount++;
+  const id = 'card-' + cardCount;
+
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.id = id;
+  card.style.setProperty('--accent', data.accentColor);
+  card.style.setProperty('--accent-soft', `color-mix(in srgb, ${data.accentColor} 16%, transparent)`);
+  card._cardData = data; // keep raw data for the Tistory export
+
+  card.innerHTML = `
+    <div class="thumb-wrap">${data.thumb ? `<img src="${data.thumb}" alt="${data.name} 썸네일">` : ''}${data.nsfw ? `<span class="nsfw-badge">NSFW</span>` : ''}</div>
+    <div class="name-row">
+      <button type="button" class="name-trigger">${data.name} <span class="id-inline">· ${data.creator}</span></button>
+      <button type="button" class="like-btn" aria-pressed="${data.liked}">${data.liked ? HEART_FILLED : HEART_OUTLINE}</button>
+    </div>
+    <button type="button" class="oneliner-trigger">${data.oneliner}</button>
+    <div class="front-slot"></div>
+    <button type="button" class="copy-btn">티스토리용 코드 복사</button>
+    <div class="flyout" data-pinned="false">
+      <button type="button" class="flyout-close" aria-label="닫기">×</button>
+      <div class="eyebrow">Detail</div>
+      <div class="flyout-name">${data.name}</div>
+      <div class="flyout-tags"></div>
+      <hr class="flyout-divider">
+      <div class="flyout-desc">${data.desc || data.oneliner}</div>
+      <div class="flyout-creator">${data.creator}</div>
+    </div>
+  `;
+
+  const frontSlot = card.querySelector('.front-slot');
+  if (data.frontMode === 'music') {
+    frontSlot.appendChild(buildMusicBar(data.musicCurrent, data.musicDuration));
+  } else {
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'tags-row';
+    frontSlot.appendChild(tagsRow);
+    fillCardTags(tagsRow, data.tags);
+  }
+
+  const flyoutTagsEl = card.querySelector('.flyout-tags');
+  const flyoutDividerEl = card.querySelector('.flyout-divider');
+  fillFlyoutTags(flyoutTagsEl, data.tags);
+  if (data.tags.length === 0) { flyoutTagsEl.style.display = 'none'; flyoutDividerEl.style.display = 'none'; }
+
+  const likeBtn = card.querySelector('.like-btn');
+  likeBtn.addEventListener('click', () => {
+    const pressed = likeBtn.getAttribute('aria-pressed') === 'true';
+    likeBtn.setAttribute('aria-pressed', String(!pressed));
+    likeBtn.innerHTML = !pressed ? HEART_FILLED : HEART_OUTLINE;
+    data.liked = !pressed;
+  });
+
+  const nameBtn = card.querySelector('.name-trigger');
+  const oneLinerBtn = card.querySelector('.oneliner-trigger');
+  const flyout = card.querySelector('.flyout');
+  const closeBtn = card.querySelector('.flyout-close');
+  closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeFlyout(card); });
+
+  [nameBtn, oneLinerBtn].forEach(el => {
+    if (hoverCapable && !isMobileLayout()) {
+      el.addEventListener('mouseenter', () => { if (flyout.dataset.pinned !== 'true') openFlyout(card); });
+    }
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = flyout.classList.contains('is-open');
+      const isPinned = flyout.dataset.pinned === 'true';
+      if (isOpen && (isPinned || isMobileLayout())) { closeFlyout(card); }
+      else { openFlyout(card, { pin: true }); }
+    });
+  });
+  if (hoverCapable && !isMobileLayout()) {
+    card.addEventListener('mouseleave', () => { if (flyout.dataset.pinned !== 'true') closeFlyout(card); });
+  }
+
+  card.querySelector('.copy-btn').addEventListener('click', () => copyTistorySnippet(card));
+
+  return card;
+}
+
+/* ---------------- add/manage cards (persistence + backup) ---------------- */
+function addCard(data, { save = true, prepend = true } = {}){
+  if (!data.id) data.id = genId();
+  cardsData.unshift(data);
+  const cardEl = buildCard(data);
+  if (prepend) grid.prepend(cardEl); else grid.appendChild(cardEl);
+  if (save) saveCards();
+  return cardEl;
+}
+
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const importFile = document.getElementById('importFile');
+
+exportBtn.addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(cardsData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'character-cards-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+importBtn.addEventListener('click', () => importFile.click());
+importFile.addEventListener('change', async () => {
+  const file = importFile.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const arr = JSON.parse(text);
+    if (!Array.isArray(arr)) throw new Error('invalid format');
+    const existingIds = new Set(cardsData.map(d => d.id));
+    let added = 0;
+    arr.forEach(d => {
+      if (d.id && existingIds.has(d.id)) return; // skip duplicates from the same backup
+      addCard(d, { save: false });
+      added++;
+    });
+    if (added > 0) saveCards();
+    alert(`${added}개 카드를 불러왔어요.`);
+  } catch (e) {
+    alert('JSON 파일을 읽는 데 실패했어요. 올바른 백업 파일인지 확인해주세요.');
+  }
+  importFile.value = '';
+});
+
+/* ---------------- search: filter by name or tag ---------------- */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase().replace(/^#/, '');
+  document.querySelectorAll('.card').forEach(card => {
+    const d = card._cardData;
+    if (!q) { card.style.display = ''; return; }
+    const nameMatch = (d.name || '').toLowerCase().includes(q);
+    const tagMatch = (d.tags || []).some(t => t.toLowerCase().replace(/^#/, '').includes(q));
+    card.style.display = (nameMatch || tagMatch) ? '' : 'none';
+  });
+});
+
+/* ================================================================
+   Tistory-safe export: NO <style>, NO <script> — everything is
+   inline `style="..."` attributes plus a native <details>/<summary>
+   for the click-to-expand description. This survives blog editors
+   that strip <style>/<script> tags on save (Tistory included).
+   ================================================================ */
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function buildTistorySnippet(data){
+  const c = getComputedStyle(root);
+  const bg = c.getPropertyValue('--card').trim();
+  const border = c.getPropertyValue('--card-border').trim();
+  const text = c.getPropertyValue('--text').trim();
+  const dim = c.getPropertyValue('--text-dim').trim();
+  const chipBg = c.getPropertyValue('--chip-bg').trim();
+  const chipBorder = c.getPropertyValue('--chip-border').trim();
+  const chipText = c.getPropertyValue('--chip-text').trim();
+  const thumbGrad = c.getPropertyValue('--thumb-grad').trim();
+  const radiusLg = c.getPropertyValue('--radius-lg').trim();
+  const accent = data.accentColor;
+  const accentSoft = `color-mix(in srgb, ${accent} 16%, transparent)`;
+
+  const chipStyle = `display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:4px 8px;border-radius:0;background:transparent;border:1px solid ${border};color:${chipText};white-space:nowrap;margin:0 4px 4px 0;`;
+  const chipPlusStyle = `display:inline-block;font-size:10px;font-weight:800;padding:4px 8px;border-radius:0;background:${accent};border:1px solid ${accent};color:#fff;white-space:nowrap;`;
+
+  const shownTags = data.tags.slice(0, 3);
+  const extraCount = data.tags.length > 3 ? data.tags.length - 3 : 0;
+  const frontTagsHTML = shownTags.map(t => `<span style="${chipStyle}">${escapeHtml(t)}</span>`).join('')
+    + (extraCount > 0 ? `<span style="${chipPlusStyle}">+${extraCount}</span>` : '');
+  const allTagsHTML = data.tags.map(t => `<span style="${chipStyle}">${escapeHtml(t)}</span>`).join('');
+
+  const heartSvg = data.liked
+    ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="${accent}"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${dim}" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.2C.5 8 2 4.5 5.6 4c2.2-.3 4.2.9 6.4 3 2.2-2.1 4.2-3.3 6.4-3C22 4.5 23.5 8 22 11.8 19.5 16.4 12 21 12 21z"/></svg>`;
+
+  let frontSlotHTML;
+  if (data.frontMode === 'music') {
+    const currentSec = parseTime(data.musicCurrent || '0:00');
+    const durationSec = parseTime(data.musicDuration || '0:00');
+    const pct = durationSec > 0 ? Math.min(100, Math.max(0, (currentSec / durationSec) * 100)) : 0;
+    frontSlotHTML = `<div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <div style="flex:1;height:2px;background:${border};border-radius:0;position:relative;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${accent};border-radius:0;"></div>
+        <div style="position:absolute;top:50%;left:${pct}%;width:9px;height:9px;border-radius:0;background:${accent};border:1px solid ${bg};transform:translate(-50%,-50%);"></div>
+      </div>
+      <span style="font-size:10px;letter-spacing:.03em;color:${dim};white-space:nowrap;">${fmtTime(currentSec)} / ${fmtTime(durationSec)}</span>
+    </div>`;
+  } else {
+    frontSlotHTML = `<div style="margin-top:4px;">${frontTagsHTML}</div>`;
+  }
+
+  const thumbHTML = data.thumb
+    ? `<img src="${data.thumb}" alt="${escapeHtml(data.name)} 썸네일" style="width:100%;height:100%;object-fit:cover;display:block;">`
+    : '';
+  const nsfwBadgeHTML = data.nsfw
+    ? `<span style="position:absolute;top:8px;right:8px;background:#c54d3f;color:#fff;font-size:9px;font-weight:900;letter-spacing:.06em;padding:3px 7px;border-radius:0;">NSFW</span>`
+    : '';
+
+  const detailTagsBlock = data.tags.length > 0
+    ? `<div style="margin-bottom:12px;">${allTagsHTML}</div>`
+    : '';
+
+  return `<div style="max-width:280px;font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;background:${bg};border:1px solid ${border};border-radius:${radiusLg};box-shadow:4px 4px 0 ${border};padding:14px;color:${text};box-sizing:border-box;">
+<div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:0;overflow:hidden;background:${thumbGrad};border:1px solid ${border};margin-bottom:12px;">${thumbHTML}${nsfwBadgeHTML}</div>
+<details>
+<summary style="cursor:pointer;list-style:none;">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+<span style="font-weight:700;font-size:16px;">${escapeHtml(data.name)} <span style="font-weight:400;color:${dim};font-size:13px;">· ${escapeHtml(data.creator)}</span></span>
+<span style="flex-shrink:0;display:inline-flex;vertical-align:middle;">${heartSvg}</span>
+</div>
+<div style="margin:6px 0 0;font-size:13px;line-height:1.5;color:${dim};overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(data.oneliner)}</div>
+</summary>
+<div style="margin-top:12px;padding-top:12px;border-top:1px dashed ${border};">
+${detailTagsBlock}
+<div style="font-size:13px;line-height:1.7;color:${text};opacity:.85;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;margin-bottom:10px;">${escapeHtml(data.desc || data.oneliner)}</div>
+<div style="text-align:right;font-size:12px;color:${dim};">${escapeHtml(data.creator)}</div>
+</div>
+</details>
+${frontSlotHTML}
+</div>`;
+}
+
+async function copyTextRobust(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) return true;
+  } catch (e) { /* fall through */ }
+  return false;
+}
+
+function showManualCopyModal(text){
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--ink);border-radius:0;padding:20px;max-width:520px;width:100%;box-sizing:border-box;">
+      <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px;">자동 복사가 지원되지 않는 환경이에요. 아래 코드가 전체 선택되어 있으니 Ctrl+C(맥은 ⌘+C)로 복사해서 붙여넣으세요.</p>
+      <textarea readonly style="width:100%;height:220px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--ink);border-radius:0;background:var(--bg);color:var(--text);box-sizing:border-box;"></textarea>
+      <button type="button" class="ccm-modal-close" style="margin-top:10px;width:100%;padding:9px;border:2px solid var(--ink);border-radius:0;background:var(--ink);color:var(--paper);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:11px;cursor:pointer;">닫기</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const ta = overlay.querySelector('textarea');
+  ta.value = text;
+  ta.focus();
+  ta.select();
+  overlay.querySelector('.ccm-modal-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function copyTistorySnippet(card){
+  const data = card._cardData;
+  const snippet = buildTistorySnippet(data);
+  const btn = card.querySelector('.copy-btn');
+  const original = btn.textContent;
+  const ok = await copyTextRobust(snippet);
+  if (ok) {
+    btn.textContent = '복사됨! 티스토리 HTML 모드에 붙여넣으세요';
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  } else {
+    showManualCopyModal(snippet);
+  }
+}
+
+/* ---------------- form submit ---------------- */
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const frontMode = document.querySelector('input[name="frontMode"]:checked').value;
+  const tags = frontMode === 'music' ? [] : document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  let thumbData = '';
+  if (thumbFile.files[0]) thumbData = await fileToDataURL(thumbFile.files[0]);
+
+  const data = {
+    thumb: thumbData,
+    name: document.getElementById('name').value.trim(),
+    oneliner: document.getElementById('oneliner').value.trim(),
+    desc: document.getElementById('desc').value.trim(),
+    tags: tags,
+    frontMode: frontMode,
+    musicCurrent: document.getElementById('musicCurrent').value.trim(),
+    musicDuration: document.getElementById('musicDuration').value.trim(),
+    creator: document.getElementById('creator').value.trim() || '@unknown',
+    accentColor: accentPicker.value,
+    liked: document.getElementById('liked').checked,
+    nsfw: document.getElementById('nsfw').checked
+  };
+  addCard(data);
+  form.reset();
+  thumbBtn.textContent = '파일 선택'; thumbBtn.classList.remove('has-file');
+  tagsField.hidden = false; musicField.hidden = true;
+  accentPicker.value = '#ff4b3e'; accentText.value = '#ff4b3e';
+});
+
+/* ---------------- initial load: restore saved cards ---------------- */
+loadCards();
+
+window.addEventListener('resize', closeAllFlyouts);
+</script>
 </body>
 </html>
